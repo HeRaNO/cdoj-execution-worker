@@ -1,0 +1,12 @@
+rootfs:
+  rootfsPath: 'path/to/rootfs'
+  workDir: '/work' # Work directory in rootfs
+  containerFilesPath: 'path/to/container_files'
+  workUser: 'test' # user in rootfs, used in execution
+mq:
+  ip: '127.0.0.1'
+  port: 5672
+  userName: 'guest'
+  password: 'guest'
+dataFilesPath: 'path/to/data_files'
+cacheFilesPath: 'path/to/cache_files'
