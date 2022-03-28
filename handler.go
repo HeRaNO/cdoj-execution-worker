@@ -23,8 +23,9 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 		return
 	}
 
-	testCases, err := prepareTestCases(execReq.RunPhases.ProblemID)
-	if err != nil {
+	testCases, ok := IDTestCasesMap[execReq.RunPhases.ProblemID]
+	if !ok {
+		err := errors.New("cannot find test cases for problemID:" + execReq.RunPhases.ProblemID)
 		ch.Publish("", req.ReplyTo, false, false, InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		return

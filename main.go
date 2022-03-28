@@ -7,10 +7,7 @@ import (
 
 func main() {
 	initConfigFile := flag.String("c", "./config.yaml", "the path of configure file")
-
-	InitConfig(initConfigFile)
-	InitContainer()
-	channel, msgQ := InitMQ()
+	channel, msgQ := Init(initConfigFile)
 
 	for req := range msgQ {
 		HandleReq(req, channel)

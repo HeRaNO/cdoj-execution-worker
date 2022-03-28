@@ -28,8 +28,8 @@ type CompilePhase struct {
 }
 
 type RunPhase struct {
-	Run       Phase `json:"run"`
-	ProblemID int32 `json:"pid"`
+	Run       Phase  `json:"run"`
+	ProblemID string `json:"pid"`
 }
 
 type ExecRequest struct {

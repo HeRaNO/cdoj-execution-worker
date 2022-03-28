@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -77,9 +76,8 @@ func prepareContainer(phase Phase, readOnly bool) (libcontainer.Container, error
 	return Factory.Create(id, &config)
 }
 
-func prepareTestCases(problemID int32) ([]TestCase, error) {
-	id := fmt.Sprintf("%d", problemID)
-	testCasesPath := filepath.Join(DataFilesPath, id)
+func prepareTestCases(problemID string) ([]TestCase, error) {
+	testCasesPath := filepath.Join(DataFilesPath, problemID)
 	ls, err := os.ReadDir(testCasesPath)
 	if err != nil {
 		ErrorLog(err, "prepareTestCases(): read directory")
@@ -123,7 +121,7 @@ func prepareTestCases(problemID int32) ([]TestCase, error) {
 		})
 	}
 	if len(testCases) == 0 {
-		err := errors.New("problemID: " + id + ": no test cases")
+		err := errors.New("problemID: " + problemID + ": no test cases")
 		ErrorLog(err, "prepareTestCases(): find answer file")
 		return nil, err
 	}

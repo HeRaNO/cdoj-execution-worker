@@ -67,7 +67,7 @@ func TestHandleTestCaseRun(t *testing.T) {
 				Memory: 256 * 1024 * 1024,
 			},
 		},
-		ProblemID: 1,
+		ProblemID: "1",
 	}
 	state, outFile, err := handleTestCaseRun(runPhase.Run, "/home/ubuntu/dataFiles/1/1.in", "FOiK9Oly6qZjYS5OpdxK/MEllxkYJ9Pe4u5aMJpoq")
 	if err != nil {
