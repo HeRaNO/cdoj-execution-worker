@@ -7,7 +7,7 @@ require (
 	github.com/opencontainers/runc v1.1.0
 	github.com/rabbitmq/amqp091-go v1.3.0
 	golang.org/x/sys v0.0.0-20211116061358-0a5406a5449c
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 require (
