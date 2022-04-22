@@ -1,4 +1,4 @@
-module github.com/lutece-dev/cdoj-execution-worker
+module github.com/HeRaNO/cdoj-execution-worker
 
 go 1.17
 
