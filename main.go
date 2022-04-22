@@ -3,14 +3,17 @@ package main
 import (
 	"flag"
 	"log"
+
+	"github.com/HeRaNO/cdoj-execution-worker/config"
+	"github.com/HeRaNO/cdoj-execution-worker/handler"
 )
 
 func main() {
 	initConfigFile := flag.String("c", "./config.yaml", "the path of configure file")
-	channel, msgQ := Init(initConfigFile)
-
+	channel, msgQ := config.Init(initConfigFile)
+	handler.InitTestCases()
 	for req := range msgQ {
-		HandleReq(req, channel)
+		handler.HandleReq(req, channel)
 	}
 
 	log.Panicln("[FATAL] Why execute this line???")
