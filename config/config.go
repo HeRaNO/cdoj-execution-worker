@@ -5,7 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var conf *Configure
