@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"sync"
 	"syscall"
 
 	"github.com/HeRaNO/cdoj-execution-worker/config"
@@ -28,67 +27,34 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 
 	testCases, ok := IDTestCasesMap[execReq.RunPhases.ProblemID]
 	if !ok {
-		err := errors.New("cannot find test cases for problemID:" + execReq.RunPhases.ProblemID)
+		err := errors.New("cannot find test cases for problemID: " + execReq.RunPhases.ProblemID)
 		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		return
 	}
 
-	exePath, compileResult, parentPath, err := HandleCompilePhases(execReq.CompilePhases)
+	runTestCaseDir, compileResult, parentPath, err := HandleCompilePhases(execReq.CompilePhases)
 	if err != nil {
 		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		return
 	}
-	compileError := false
-	checkerError := false
-	for name, result := range compileResult {
-		if !result.Succeed {
-			compileError = true
-			if name == execReq.CheckPhase.Exec {
-				checkerError = true
-			}
-		}
-	}
-	if checkerError {
-		err := errors.New("checker compile error")
-		errMsg := compileResult[execReq.CheckPhase.Exec]
-		ch.Publish("", req.ReplyTo, false, false, util.CompileError(config.IE, err, errMsg.ErrMsg, req.CorrelationId))
-		req.Ack(false)
-		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
-		os.RemoveAll(parentPath)
-		return
-	} else if compileError {
-		errMsg := compileResult[execReq.RunPhases.Run.Exec]
-		ch.Publish("", req.ReplyTo, false, false, util.CompileError(config.CE, nil, errMsg.ErrMsg, req.CorrelationId))
+	if !compileResult.Succeed {
+		ch.Publish("", req.ReplyTo, false, false, util.CompileError(config.CE, nil, compileResult.ErrMsg, req.CorrelationId))
 		req.Ack(false)
 		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 		os.RemoveAll(parentPath)
 		return
 	}
 
+	checkPhase, runCheckDir, err := handleCheckerPrepare(execReq.CheckPhase, execReq.RunPhases.ProblemID)
+	if err != nil {
+		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		req.Ack(false)
+		return
+	}
 	runPhases := execReq.RunPhases
-	runTestCaseDir, ok := exePath[runPhases.Run.Exec]
-	if !ok {
-		err := errors.New("cannot find run directory")
-		util.ErrorLog(err, "handleRun()")
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
-		req.Ack(false)
-		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
-		os.RemoveAll(parentPath)
-		return
-	}
-	checkPhase := execReq.CheckPhase
-	runCheckDir, ok := exePath[checkPhase.Exec]
-	if !ok {
-		err := errors.New("cannot find check directory")
-		util.ErrorLog(err, "handleRun()")
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
-		req.Ack(false)
-		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
-		os.RemoveAll(parentPath)
-		return
-	}
+
 	for _, testCase := range testCases {
 		result, outFile, err := HandleTestCaseRun(runPhases.Run, testCase.Input, runTestCaseDir)
 		if err != nil {
@@ -283,60 +249,61 @@ func HandleCompilePhase(phase model.Phase, workDir string) (*model.CompileResult
 	}, nil
 }
 
-func HandleCompilePhases(phases []model.CompilePhase) (map[string]string, map[string]*model.CompileResult, string, error) {
+func HandleCompilePhases(phase model.CompilePhase) (string, *model.CompileResult, string, error) {
 	folderName, compileParentPath, err := util.Mkdir(config.WorkDirGlobal)
 	if err != nil {
-		return nil, nil, "", err
+		return "", nil, "", err
 	}
 	compileRootfsPath := filepath.Join(config.WorkDirInRootfs, folderName)
-	wg := sync.WaitGroup{}
-	oneErr := util.OneError{}
-	exePathMap := sync.Map{}
-	exeErrMap := sync.Map{}
-	for _, phase := range phases {
-		wg.Add(1)
-		go func(phase model.CompilePhase) {
-			defer wg.Done()
-			compileFolderName, compilePath, err := util.Mkdir(compileParentPath)
-			if err != nil {
-				oneErr.Add(err)
-				return
-			}
-			compilePathInRootfs := filepath.Join(compileRootfsPath, compileFolderName)
-			err = prepareCodeFiles(phase.SourceCode, compilePath)
-			if err != nil {
-				oneErr.Add(err)
-				return
-			}
-			msg, err := HandleCompilePhase(phase.Compile, compilePathInRootfs)
-			if err != nil {
-				oneErr.Add(err)
-				return
-			}
-			exeErrMap.Store(phase.ExecName, msg)
-			err = deleteCodeFiles(phase.SourceCode, compilePath)
-			if err != nil {
-				oneErr.Add(err)
-				return
-			}
-			exePathMap.Store(phase.ExecName, filepath.Join(folderName, compileFolderName))
-		}(phase)
-	}
-	wg.Wait()
 
-	exePath := make(map[string]string, 0)
-	exeErr := make(map[string]*model.CompileResult, 0)
-	exePathMap.Range(func(key, value interface{}) bool {
-		k, _ := key.(string) // We trust key and value are all string
-		v, _ := value.(string)
-		exePath[k] = v
-		return true
-	})
-	exeErrMap.Range(func(key, value interface{}) bool {
-		k, _ := key.(string) // We trust key is string and value is OmitString
-		v, _ := value.(*model.CompileResult)
-		exeErr[k] = v
-		return true
-	})
-	return exePath, exeErr, folderName, oneErr.Err
+	compileFolderName, compilePath, err := util.Mkdir(compileParentPath)
+	if err != nil {
+		return "", nil, "", err
+	}
+	compilePathInRootfs := filepath.Join(compileRootfsPath, compileFolderName)
+	err = prepareCodeFiles(phase.SourceCode, compilePath)
+	if err != nil {
+		return "", nil, "", err
+	}
+	msg, err := HandleCompilePhase(phase.Compile, compilePathInRootfs)
+	if err != nil {
+		return "", msg, "", err
+	}
+	err = deleteCodeFiles(phase.SourceCode, compilePath)
+	if err != nil {
+		return "", msg, "", err
+	}
+
+	return filepath.Join(folderName, compileFolderName), msg, folderName, nil
+}
+
+func handleCheckerPrepare(checkMethod string, problemID string) (model.Phase, string, error) {
+	phase := model.Phase{}
+	folderName, _, err := util.Mkdir(config.WorkDirGlobal)
+	if err != nil {
+		return phase, "", err
+	}
+	checkerPath := filepath.Join(config.WorkDirGlobal, folderName)
+	oriChecker := ""
+	if checkMethod == "wcmp" {
+		oriChecker = filepath.Join(config.DataFilesPath, "fecmp")
+	} else {
+		if !IDCustomCheckerMap[problemID] {
+			return phase, "", errors.New("cannot find custom checker for problemID: " + problemID)
+		}
+		oriChecker = filepath.Join(config.DataFilesPath, problemID, "spj")
+	}
+	err = util.SafeCopy(oriChecker, filepath.Join(checkerPath, "checker"))
+	if err != nil {
+		return phase, "", errors.New("cannot copy fecmp: " + err.Error())
+	}
+	phase = model.Phase{
+		Exec:    "checker",
+		RunArgs: []string{"./checker", "input", "user_out", "answer"},
+		Limits: model.Limitation{
+			Time:   10000,
+			Memory: 1024 << 20,
+		},
+	}
+	return phase, checkerPath, nil
 }

@@ -12,9 +12,9 @@ func TestPrepareTestCase(t *testing.T) {
 	initConfigFile := flag.String("c", "./config.yaml", "the path of configure file")
 
 	config.InitConfig(initConfigFile)
-	testCases, err := handler.PrepareTestCases("1")
+	testCases, customChecker, err := handler.PrepareTestCases("1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Error(testCases)
+	t.Error(testCases, customChecker)
 }

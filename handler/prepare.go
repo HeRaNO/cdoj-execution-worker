@@ -79,15 +79,26 @@ func prepareContainer(phase model.Phase, readOnly bool) (libcontainer.Container,
 	return config.Factory.Create(id, &conf)
 }
 
-func PrepareTestCases(problemID string) ([]model.TestCase, error) {
+func PrepareTestCases(problemID string) ([]model.TestCase, bool, error) {
 	testCasesPath := filepath.Join(config.DataFilesPath, problemID)
+	fstat, err := os.Stat(testCasesPath + "/fecmp") // Check whether default checker exists
+	if err != nil {
+		util.ErrorLog(err, "PrepareTestCases(): read default checker")
+		return nil, false, err
+	}
+	if fstat.IsDir() {
+		err := errors.New("fecmp is a folder")
+		util.ErrorLog(err, "PrepareTestCases(): read default checker")
+		return nil, false, err
+	}
 	ls, err := os.ReadDir(testCasesPath)
 	if err != nil {
 		util.ErrorLog(err, "PrepareTestCases(): read directory")
-		return nil, err
+		return nil, false, err
 	}
 	allFilesName := make(map[string]bool, 0)
 	testCasesInput := make(map[string]bool, 0)
+	customChecker := false
 	for _, f := range ls {
 		if f.Type().IsRegular() {
 			fileFullName := f.Name()
@@ -96,6 +107,9 @@ func PrepareTestCases(problemID string) ([]model.TestCase, error) {
 			fileName := strings.TrimSuffix(fileFullName, fileExt)
 			if fileExt == ".in" {
 				testCasesInput[fileName] = true
+			}
+			if fileFullName == "spj.cpp" {
+				customChecker = true
 			}
 		}
 	}
@@ -109,14 +123,14 @@ func PrepareTestCases(problemID string) ([]model.TestCase, error) {
 			if outputExt != "" {
 				err := errors.New("cannot recognise answer file: multipile answer file")
 				util.ErrorLog(err, "PrepareTestCases(): find answer file")
-				return nil, err
+				return nil, false, err
 			}
 			outputExt = ".ans"
 		}
 		if outputExt == "" {
 			err := errors.New("cannot recognise answer file: no answer file")
 			util.ErrorLog(err, "PrepareTestCases(): find answer file")
-			return nil, err
+			return nil, false, err
 		}
 		testCases = append(testCases, model.TestCase{
 			Input:  filepath.Join(testCasesPath, inputName+".in"),
@@ -126,7 +140,7 @@ func PrepareTestCases(problemID string) ([]model.TestCase, error) {
 	if len(testCases) == 0 {
 		err := errors.New("problemID: " + problemID + ": no test cases")
 		util.ErrorLog(err, "PrepareTestCases(): find answer file")
-		return nil, err
+		return nil, false, err
 	}
-	return testCases, nil
+	return testCases, customChecker, nil
 }

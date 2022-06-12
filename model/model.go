@@ -35,9 +35,9 @@ type RunPhase struct {
 }
 
 type ExecRequest struct {
-	CompilePhases []CompilePhase `json:"compile_phases"`
-	RunPhases     RunPhase       `json:"run_phases"`
-	CheckPhase    Phase          `json:"check_phase"`
+	CompilePhases CompilePhase `json:"compile_phases"`
+	RunPhases     RunPhase     `json:"run_phases"`
+	CheckPhase    string       `json:"check_phase"`
 }
 
 type ExecResult struct {

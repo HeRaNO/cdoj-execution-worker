@@ -11,6 +11,7 @@ import (
 )
 
 var IDTestCasesMap map[string][]model.TestCase
+var IDCustomCheckerMap map[string]bool
 
 func InitTestCases() {
 	IDTestCasesMap = make(map[string][]model.TestCase, 0)
@@ -26,12 +27,13 @@ func InitTestCases() {
 			defer wg.Done()
 			if problem.IsDir() {
 				problemID := problem.Name()
-				testCase, err := PrepareTestCases(problemID)
+				testCase, customChecker, err := PrepareTestCases(problemID)
 				if err != nil {
 					util.ErrorLog(err, "PrepareTestCases for problem: "+problemID)
 					panic(err)
 				}
 				IDTestCasesMap[problemID] = testCase
+				IDCustomCheckerMap[problemID] = customChecker
 			}
 		}(&wg, problem)
 	}

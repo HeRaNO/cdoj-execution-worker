@@ -19,10 +19,6 @@ func TestHandleCompilePhases(t *testing.T) {
 		Name:    "main.cpp",
 		Content: "#include <cstdio>\n\nint main()\n{\n\tint a, b;\n\tscanf(\"%d %d\", &a, &b);\n\tprintf(\"%d\\n\", a + b);\n\treturn 0;\n}\n",
 	}
-	checkCpp := model.SourceCodeDescriptor{
-		Name:    "check.cpp",
-		Content: "#include \"testlib.h\"\n#include <string>\n#include <vector>\n#include <sstream>\n\nusing namespace std;\n\nint main(int argc, char * argv[])\n{\n    setName(\"compare files as sequence of lines\");\n    registerTestlibCmd(argc, argv);\n\n    std::string strAnswer;\n\n    int n = 0;\n    while (!ans.eof()) \n    {\n        std::string j = ans.readString();\n\n        if (j == \"\" && ans.eof())\n          break;\n\n        strAnswer = j;\n        std::string p = ouf.readString();\n\n        n++;\n\n        if (j != p)\n            quitf(_wa, \"%d%s lines differ - expected: '%s', found: '%s'\", n, englishEnding(n).c_str(), compress(j).c_str(), compress(p).c_str());\n    }\n    \n    if (n == 1)\n        quitf(_ok, \"single line: '%s'\", compress(strAnswer).c_str());\n    \n    quitf(_ok, \"%d lines\", n);\n}\n",
-	}
 	execReq := model.CompilePhase{
 		Compile: model.Phase{
 			Exec:    "g++",
@@ -37,21 +33,7 @@ func TestHandleCompilePhases(t *testing.T) {
 		},
 		ExecName: "main",
 	}
-	execReq2 := model.CompilePhase{
-		Compile: model.Phase{
-			Exec:    "g++",
-			RunArgs: []string{"g++", "check.cpp", "-o", "check", "-O2", "-std=c++17"},
-			Limits: model.Limitation{
-				Time:   10000,
-				Memory: 1024 * 1024 * 1024,
-			},
-		},
-		SourceCode: []model.SourceCodeDescriptor{
-			checkCpp,
-		},
-		ExecName: "check",
-	}
-	exePath, compileErrMsg, parentPath, err := handler.HandleCompilePhases([]model.CompilePhase{execReq, execReq2})
+	exePath, compileErrMsg, parentPath, err := handler.HandleCompilePhases(execReq)
 	if err != nil {
 		t.Fatal(err)
 	}
