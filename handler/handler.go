@@ -261,16 +261,18 @@ func HandleCompilePhases(phase model.CompilePhase) (string, *model.CompileResult
 		return "", nil, "", err
 	}
 	compilePathInRootfs := filepath.Join(compileRootfsPath, compileFolderName)
-	err = prepareCodeFiles(phase.SourceCode, compilePath)
+	err = prepareCodeFile(phase.SourceCode, compilePath)
 	if err != nil {
+		util.ErrorLog(err, "prepareCodeFile()")
 		return "", nil, "", err
 	}
 	msg, err := HandleCompilePhase(phase.Compile, compilePathInRootfs)
 	if err != nil {
 		return "", msg, "", err
 	}
-	err = deleteCodeFiles(phase.SourceCode, compilePath)
+	err = deleteCodeFile(phase.SourceCode, compilePath)
 	if err != nil {
+		util.ErrorLog(err, "deleteCodeFile()")
 		return "", msg, "", err
 	}
 

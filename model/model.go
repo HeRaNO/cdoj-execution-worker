@@ -24,9 +24,9 @@ type SourceCodeDescriptor struct {
 }
 
 type CompilePhase struct {
-	Compile    Phase                  `json:"compile"`
-	SourceCode []SourceCodeDescriptor `json:"code"`
-	ExecName   string                 `json:"exec_name"`
+	Compile    Phase                `json:"compile"`
+	SourceCode SourceCodeDescriptor `json:"code"`
+	ExecName   string               `json:"exec_name"`
 }
 
 type RunPhase struct {

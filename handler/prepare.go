@@ -15,31 +15,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func prepareCodeFiles(files []model.SourceCodeDescriptor, filePath string) error {
-	for _, file := range files {
-		err := prepareCodeFile(file, filePath)
-		if err != nil {
-			util.ErrorLog(err, "prepareCodeFile(): WriteFile")
-			return err
-		}
-	}
-	return nil
-}
-
 func prepareCodeFile(fileDesc model.SourceCodeDescriptor, filePath string) error {
 	fileRealPath := filepath.Join(filePath, fileDesc.Name)
 	return ioutil.WriteFile(fileRealPath, []byte(fileDesc.Content), 0644)
-}
-
-func deleteCodeFiles(files []model.SourceCodeDescriptor, filePath string) error {
-	for _, file := range files {
-		err := deleteCodeFile(file, filePath)
-		if err != nil {
-			util.ErrorLog(err, "deleteCodeFile(): remove file")
-			return err
-		}
-	}
-	return nil
 }
 
 func deleteCodeFile(fileDesc model.SourceCodeDescriptor, filePath string) error {

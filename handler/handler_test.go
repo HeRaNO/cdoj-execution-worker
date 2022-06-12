@@ -28,10 +28,8 @@ func TestHandleCompilePhases(t *testing.T) {
 				Memory: 1024 * 1024 * 1024,
 			},
 		},
-		SourceCode: []model.SourceCodeDescriptor{
-			mainCpp,
-		},
-		ExecName: "main",
+		SourceCode: mainCpp,
+		ExecName:   "main",
 	}
 	exePath, compileErrMsg, parentPath, err := handler.HandleCompilePhases(execReq)
 	if err != nil {
