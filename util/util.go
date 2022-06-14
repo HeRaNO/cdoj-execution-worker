@@ -147,15 +147,23 @@ func InternalError(err error, corId string) amqp091.Publishing {
 	return MakePublishing(resp, corId)
 }
 
-func CompileError(code config.ErrorCode, err error, msg *model.OmitString, corId string) amqp091.Publishing {
-	errMsg := ""
-	if err != nil {
-		errMsg = err.Error()
+func CompileError(msg *model.OmitString, corId string) amqp091.Publishing {
+	resp := model.Response{
+		ErrCode: config.CE,
+		ErrMsg:  "compile error",
+		Data:    msg,
+	}
+	return MakePublishing(resp, corId)
+}
+
+func RunError(err error, res model.ExecResult, corId string) amqp091.Publishing {
+	if err == nil {
+		err = errors.New("exit code is not zero")
 	}
 	resp := model.Response{
-		ErrCode: code,
-		ErrMsg:  errMsg,
-		Data:    msg,
+		ErrCode: config.RE,
+		ErrMsg:  err.Error(),
+		Data:    res,
 	}
 	return MakePublishing(resp, corId)
 }
@@ -164,6 +172,24 @@ func OKResp(resp model.ExecResult, corId string) amqp091.Publishing {
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "success",
+		Data:    resp,
+	}
+	return MakePublishing(rep, corId)
+}
+
+func RunningResp(cas int, corId string) amqp091.Publishing {
+	rep := model.Response{
+		ErrCode: config.OK,
+		ErrMsg:  "running",
+		Data:    cas,
+	}
+	return MakePublishing(rep, corId)
+}
+
+func WAResp(resp model.ExecResult, corId string) amqp091.Publishing {
+	rep := model.Response{
+		ErrCode: config.OK,
+		ErrMsg:  "wrong answer",
 		Data:    resp,
 	}
 	return MakePublishing(rep, corId)

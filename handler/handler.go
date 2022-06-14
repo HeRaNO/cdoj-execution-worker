@@ -37,10 +37,12 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 	if err != nil {
 		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
+		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
+		os.RemoveAll(parentPath)
 		return
 	}
 	if !compileResult.Succeed {
-		ch.Publish("", req.ReplyTo, false, false, util.CompileError(config.CE, nil, compileResult.ErrMsg, req.CorrelationId))
+		ch.Publish("", req.ReplyTo, false, false, util.CompileError(compileResult.ErrMsg, req.CorrelationId))
 		req.Ack(false)
 		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 		os.RemoveAll(parentPath)
@@ -51,36 +53,70 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 	if err != nil {
 		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
+		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
+		os.RemoveAll(parentPath)
 		return
 	}
 	runPhases := execReq.RunPhases
 
-	for _, testCase := range testCases {
+	maxUserTime := int64(0)
+	maxMemory := int64(0)
+	failed := false
+
+	for i, testCase := range testCases {
+		ch.Publish("", req.ReplyTo, false, false, util.RunningResp(i+1, req.CorrelationId))
 		result, outFile, err := HandleTestCaseRun(runPhases.Run, testCase.Input, runTestCaseDir)
 		if err != nil {
 			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
-			req.Ack(false)
+			failed = true
 			break
 		}
-		if result.Err != nil {
-			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		if result.Err != nil || result.ProcessState.ExitCode() != 0 {
+			rusage := result.ProcessState.SysUsage().(*syscall.Rusage)
+			runRes := model.ExecResult{
+				Case:         int32(i + 1),
+				ExitCode:     result.ProcessState.ExitCode(),
+				UserTimeUsed: result.ProcessState.UserTime().Nanoseconds(),
+				SysTimeUsed:  result.ProcessState.SystemTime().Nanoseconds(),
+				MemoryUsed:   rusage.Maxrss,
+			}
+			ch.Publish("", req.ReplyTo, false, false, util.RunError(result.Err, runRes, req.CorrelationId))
+			failed = true
 			break
 		}
 		checkerResult, err := HandleCheckerRun(checkPhase, testCase, outFile, runCheckDir)
 		if err != nil {
 			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
-			req.Ack(false)
+			failed = true
 			break
 		}
-		rusage := result.ProcessState.SysUsage().(*syscall.Rusage)
-		runRes := model.ExecResult{
-			ExitCode:      result.ProcessState.ExitCode(),
-			UserTimeUsed:  result.ProcessState.UserTime().Nanoseconds(),
-			SysTimeUsed:   result.ProcessState.SystemTime().Nanoseconds(),
-			MemoryUsed:    rusage.Maxrss,
-			CheckerResult: checkerResult,
-		}
 		os.Remove(outFile)
+		if checkerResult.S[0] != 'o' {
+			rusage := result.ProcessState.SysUsage().(*syscall.Rusage)
+			runRes := model.ExecResult{
+				Case:          int32(i + 1),
+				ExitCode:      result.ProcessState.ExitCode(),
+				UserTimeUsed:  result.ProcessState.UserTime().Nanoseconds(),
+				SysTimeUsed:   result.ProcessState.SystemTime().Nanoseconds(),
+				MemoryUsed:    rusage.Maxrss,
+				CheckerResult: checkerResult,
+			}
+			ch.Publish("", req.ReplyTo, false, false, util.WAResp(runRes, req.CorrelationId))
+			failed = true
+			break
+		}
+		if result.ProcessState.UserTime().Nanoseconds() > maxUserTime {
+			maxUserTime = result.ProcessState.UserTime().Nanoseconds()
+		}
+		if result.ProcessState.SysUsage().(*syscall.Rusage).Maxrss > maxMemory {
+			maxMemory = result.ProcessState.SysUsage().(*syscall.Rusage).Maxrss
+		}
+	}
+	if !failed {
+		runRes := model.ExecResult{
+			UserTimeUsed: maxUserTime,
+			MemoryUsed:   maxMemory,
+		}
 		ch.Publish("", req.ReplyTo, false, false, util.OKResp(runRes, req.CorrelationId))
 	}
 	parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
@@ -127,7 +163,7 @@ func HandleTestCaseRun(phase model.Phase, inputPath string, workDir string) (*mo
 	if err != nil {
 		return nil, "", err
 	}
-	return state, outFilePath, err
+	return state, outFilePath, nil
 }
 
 func HandleCheckerRun(phase model.Phase, testCase model.TestCase, userOutput string, workDir string) (*model.OmitString, error) {

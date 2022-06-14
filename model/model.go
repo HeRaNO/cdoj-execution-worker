@@ -41,6 +41,7 @@ type ExecRequest struct {
 }
 
 type ExecResult struct {
+	Case          int32       `json:"case"`
 	ExitCode      int         `json:"exit_code"`
 	UserTimeUsed  int64       `json:"user_time"`
 	SysTimeUsed   int64       `json:"sys_time"`

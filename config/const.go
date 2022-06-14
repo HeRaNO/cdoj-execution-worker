@@ -17,4 +17,5 @@ const (
 	OK ErrorCode = iota
 	CE
 	IE
+	RE
 )
