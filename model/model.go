@@ -52,7 +52,7 @@ type ExecResult struct {
 type Response struct {
 	ErrCode config.ErrorCode `json:"err"`
 	ErrMsg  string           `json:"msg"`
-	Data    interface{}      `json:"data,omitempty"`
+	Data    string           `json:"data"`
 }
 
 type TestCase struct {

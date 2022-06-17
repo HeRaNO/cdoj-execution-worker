@@ -49,7 +49,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 		return
 	}
 
-	checkPhase, runCheckDir, err := handleCheckerPrepare(execReq.CheckPhase, execReq.RunPhases.ProblemID)
+	checkPhase, runCheckDir, err := handleCheckerPrepare(execReq.CheckPhase, execReq.RunPhases.ProblemID, parentPath)
 	if err != nil {
 		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
@@ -315,13 +315,15 @@ func HandleCompilePhases(phase model.CompilePhase) (string, *model.CompileResult
 	return filepath.Join(folderName, compileFolderName), msg, folderName, nil
 }
 
-func handleCheckerPrepare(checkMethod string, problemID string) (model.Phase, string, error) {
+func handleCheckerPrepare(checkMethod string, problemID string, parentPath string) (model.Phase, string, error) {
 	phase := model.Phase{}
-	folderName, _, err := util.Mkdir(config.WorkDirGlobal)
+	globalParentPath := filepath.Join(config.WorkDirGlobal, parentPath)
+	folderName, _, err := util.Mkdir(globalParentPath)
 	if err != nil {
 		return phase, "", err
 	}
-	checkerPath := filepath.Join(config.WorkDirGlobal, folderName)
+	checkerPath := filepath.Join(globalParentPath, folderName)
+	checkerRelativePath := filepath.Join(parentPath, folderName)
 	oriChecker := ""
 	if checkMethod == "wcmp" {
 		oriChecker = filepath.Join(config.DataFilesPath, "fecmp")
@@ -343,5 +345,5 @@ func handleCheckerPrepare(checkMethod string, problemID string) (model.Phase, st
 			Memory: 1024 << 20,
 		},
 	}
-	return phase, checkerPath, nil
+	return phase, checkerRelativePath, nil
 }

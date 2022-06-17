@@ -8,5 +8,6 @@ mq:
   port: 5672
   userName: 'guest'
   password: 'guest'
+  queueName: 'cdoj-vjudge-judging-queue'
 dataFilesPath: 'path/to/data_files'
 cacheFilesPath: 'path/to/cache_files'

@@ -21,7 +21,7 @@ func InitMQ() (*amqp.Channel, <-chan amqp.Delivery) {
 		log.Println("[FATAL] Init message queue failed: init channel failed")
 		panic(err)
 	}
-	q, err := ch.QueueDeclare("", true, false, true, false, nil)
+	q, err := ch.QueueDeclare(conf.MQ.QueueName, true, false, true, false, nil)
 	if err != nil {
 		log.Println("[FATAL] Init message queue failed: declare queue failed")
 		panic(err)

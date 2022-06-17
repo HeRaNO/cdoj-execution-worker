@@ -113,7 +113,7 @@ func SafeCopy(src string, dst string) error {
 	}
 	defer source.Close()
 
-	destination, err := os.Create(dst)
+	destination, err := os.OpenFile(dst, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		ErrorLog(err, "SafeCopy(): open destination file")
 		return err
@@ -148,10 +148,14 @@ func InternalError(err error, corId string) amqp091.Publishing {
 }
 
 func CompileError(msg *model.OmitString, corId string) amqp091.Publishing {
+	msgStr, err := jsoniter.MarshalToString(msg)
+	if err != nil {
+		panic(err)
+	}
 	resp := model.Response{
 		ErrCode: config.CE,
 		ErrMsg:  "compile error",
-		Data:    msg,
+		Data:    msgStr,
 	}
 	return MakePublishing(resp, corId)
 }
@@ -160,37 +164,50 @@ func RunError(err error, res model.ExecResult, corId string) amqp091.Publishing 
 	if err == nil {
 		err = errors.New("exit code is not zero")
 	}
+	resStr, merr := jsoniter.MarshalToString(res)
+	if merr != nil {
+		panic(merr)
+	}
 	resp := model.Response{
 		ErrCode: config.RE,
 		ErrMsg:  err.Error(),
-		Data:    res,
+		Data:    resStr,
 	}
 	return MakePublishing(resp, corId)
 }
 
 func OKResp(resp model.ExecResult, corId string) amqp091.Publishing {
+	resStr, err := jsoniter.MarshalToString(resp)
+	if err != nil {
+		panic(err)
+	}
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "success",
-		Data:    resp,
+		Data:    resStr,
 	}
 	return MakePublishing(rep, corId)
 }
 
 func RunningResp(cas int, corId string) amqp091.Publishing {
+	casStr := fmt.Sprintf("%d", cas)
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "running",
-		Data:    cas,
+		Data:    casStr,
 	}
 	return MakePublishing(rep, corId)
 }
 
 func WAResp(resp model.ExecResult, corId string) amqp091.Publishing {
+	resStr, err := jsoniter.MarshalToString(resp)
+	if err != nil {
+		panic(err)
+	}
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "wrong answer",
-		Data:    resp,
+		Data:    resStr,
 	}
 	return MakePublishing(rep, corId)
 }

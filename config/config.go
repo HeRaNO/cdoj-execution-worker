@@ -27,10 +27,11 @@ type RootfsConfig struct {
 }
 
 type MQConfig struct {
-	IP       string `yaml:"ip"`
-	Port     int    `yaml:"port"`
-	UserName string `yaml:"userName"`
-	Password string `yaml:"password"`
+	IP        string `yaml:"ip"`
+	Port      int    `yaml:"port"`
+	UserName  string `yaml:"userName"`
+	Password  string `yaml:"password"`
+	QueueName string `yaml:"queueName"`
 }
 
 func InitConfig(filePath *string) {
