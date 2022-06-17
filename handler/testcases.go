@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/HeRaNO/cdoj-execution-worker/config"
@@ -15,9 +17,20 @@ var IDCustomCheckerMap map[string]bool
 
 func InitTestCases() {
 	IDTestCasesMap = make(map[string][]model.TestCase, 0)
+	IDCustomCheckerMap = make(map[string]bool, 0)
 	problems, err := os.ReadDir(config.DataFilesPath)
 	if err != nil {
 		util.ErrorLog(err, "ReadDir()")
+		panic(err)
+	}
+	fstat, err := os.Stat(filepath.Join(config.DataFilesPath, "fecmp")) // Check whether default checker exists
+	if err != nil {
+		util.ErrorLog(err, "PrepareTestCases(): read default checker")
+		panic(err)
+	}
+	if fstat.IsDir() {
+		err := errors.New("fecmp is a folder")
+		util.ErrorLog(err, "PrepareTestCases(): read default checker")
 		panic(err)
 	}
 	wg := sync.WaitGroup{}

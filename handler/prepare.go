@@ -59,16 +59,6 @@ func prepareContainer(phase model.Phase, readOnly bool) (libcontainer.Container,
 
 func PrepareTestCases(problemID string) ([]model.TestCase, bool, error) {
 	testCasesPath := filepath.Join(config.DataFilesPath, problemID)
-	fstat, err := os.Stat(testCasesPath + "/fecmp") // Check whether default checker exists
-	if err != nil {
-		util.ErrorLog(err, "PrepareTestCases(): read default checker")
-		return nil, false, err
-	}
-	if fstat.IsDir() {
-		err := errors.New("fecmp is a folder")
-		util.ErrorLog(err, "PrepareTestCases(): read default checker")
-		return nil, false, err
-	}
 	ls, err := os.ReadDir(testCasesPath)
 	if err != nil {
 		util.ErrorLog(err, "PrepareTestCases(): read directory")
