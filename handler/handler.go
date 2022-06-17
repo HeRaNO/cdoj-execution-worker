@@ -213,7 +213,7 @@ func HandleCheckerRun(phase model.Phase, testCase model.TestCase, userOutput str
 	if err != nil {
 		return nil, err
 	}
-	if state.Err != nil {
+	if state.Err != nil && state.ProcessState.ExitCode() != 1 {
 		util.ErrorLog(state.Err, "HandleCheckerRun(): checker run error")
 		return nil, state.Err
 	}
@@ -269,13 +269,6 @@ func HandleCompilePhase(phase model.Phase, workDir string) (*model.CompileResult
 		return nil, err
 	}
 	succeed := true
-	if state.Err != nil {
-		succeed = false
-		errMsg = &model.OmitString{
-			S:        state.Err.Error(),
-			OmitSize: 0,
-		}
-	}
 	if state.ProcessState.ExitCode() != 0 {
 		succeed = false
 	}
