@@ -29,14 +29,14 @@ func executeSingle(container libcontainer.Container, process *libcontainer.Proce
 	p, err := process.Wait()
 	cancel()
 
-	if err != nil {
+	if oneErr.Err != nil {
 		return &model.ProcessResult{
 			ProcessState: p,
-			Err:          err,
+			Err:          oneErr.Err,
 		}, nil
 	}
 	return &model.ProcessResult{
 		ProcessState: p,
-		Err:          oneErr.Err,
+		Err:          err,
 	}, nil
 }
