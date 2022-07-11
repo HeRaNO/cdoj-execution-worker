@@ -34,6 +34,8 @@ func InitTestCases() {
 		panic(err)
 	}
 	wg := sync.WaitGroup{}
+	idTestCasesSyncMap := sync.Map{}
+	idCustomCheckerSyncMap := sync.Map{}
 	for _, problem := range problems {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, problem fs.DirEntry) {
@@ -45,11 +47,19 @@ func InitTestCases() {
 					util.ErrorLog(err, "PrepareTestCases for problem: "+problemID)
 					panic(err)
 				}
-				IDTestCasesMap[problemID] = testCase
-				IDCustomCheckerMap[problemID] = customChecker
+				idTestCasesSyncMap.Store(problemID, testCase)
+				idCustomCheckerSyncMap.Store(problemID, customChecker)
 			}
 		}(&wg, problem)
 	}
 	wg.Wait()
+	idTestCasesSyncMap.Range(func(key, value interface{}) bool {
+		IDTestCasesMap[key.(string)] = value.([]model.TestCase)
+		return true
+	})
+	idCustomCheckerSyncMap.Range(func(key, value interface{}) bool {
+		IDCustomCheckerMap[key.(string)] = value.(bool)
+		return true
+	})
 	util.InfoLog("init test cases successully", nil)
 }
