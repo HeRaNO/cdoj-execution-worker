@@ -213,7 +213,7 @@ func HandleCheckerRun(phase model.Phase, testCase model.TestCase, userOutput str
 	if err != nil {
 		return nil, err
 	}
-	if state.Err != nil && state.ProcessState.ExitCode() != 1 {
+	if state.Err != nil && state.ProcessState.ExitCode() > 2 {
 		util.ErrorLog(state.Err, "HandleCheckerRun(): checker run error")
 		return nil, state.Err
 	}
