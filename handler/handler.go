@@ -72,6 +72,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 			break
 		}
 		if result.Err != nil || result.ProcessState.ExitCode() != 0 {
+			os.Remove(outFile)
 			rusage := result.ProcessState.SysUsage().(*syscall.Rusage)
 			runRes := model.ExecResult{
 				Case:         int32(i + 1),
@@ -86,6 +87,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 		}
 		checkerResult, err := HandleCheckerRun(checkPhase, testCase, outFile, runCheckDir)
 		if err != nil {
+			os.Remove(outFile)
 			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 			failed = true
 			break
