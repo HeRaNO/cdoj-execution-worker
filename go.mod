@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/json-iterator/go v1.1.12
-	github.com/opencontainers/runc v1.1.3
+	github.com/opencontainers/runc v1.1.5
 	github.com/rabbitmq/amqp091-go v1.3.4
 	golang.org/x/sys v0.5.0
 )
