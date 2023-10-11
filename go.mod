@@ -6,7 +6,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/opencontainers/runc v1.1.5
 	github.com/rabbitmq/amqp091-go v1.3.4
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.13.0
 )
 
 require (
@@ -31,7 +31,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
