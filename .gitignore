@@ -17,3 +17,4 @@ cdoj-execution-worker
 
 # config for test
 config.yaml
+worker.log

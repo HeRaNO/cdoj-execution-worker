@@ -67,7 +67,6 @@ func LimitFileReader(filePath string) (*model.OmitString, error) {
 	}
 	allSize := stat.Size()
 	if allSize == 0 {
-		InfoLog("file size equals to 0, file stat:", stat)
 		return nil, nil
 	}
 	readSize := config.OmitStringLen
