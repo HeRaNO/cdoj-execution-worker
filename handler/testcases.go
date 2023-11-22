@@ -37,7 +37,7 @@ func InitTestCases() {
 	wg := sync.WaitGroup{}
 	idTestCasesSyncMap := sync.Map{}
 	idCustomCheckerSyncMap := sync.Map{}
-	for _, problem := range problems {
+	for i, problem := range problems {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, problem fs.DirEntry) {
 			defer wg.Done()
@@ -52,6 +52,9 @@ func InitTestCases() {
 				idCustomCheckerSyncMap.Store(problemID, customChecker)
 			}
 		}(&wg, problem)
+		if i%1000 == 0 {
+			wg.Wait()
+		}
 	}
 	wg.Wait()
 	idTestCasesSyncMap.Range(func(key, value interface{}) bool {
