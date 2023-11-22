@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -61,5 +62,5 @@ func InitTestCases() {
 		IDCustomCheckerMap[key.(string)] = value.(bool)
 		return true
 	})
-	util.InfoLog("init test cases successully", nil)
+	log.Println("init test cases successully")
 }

@@ -13,7 +13,7 @@ import (
 
 	"github.com/HeRaNO/cdoj-execution-worker/config"
 	"github.com/HeRaNO/cdoj-execution-worker/model"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/goccy/go-json"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -126,7 +126,7 @@ func SafeCopy(src string, dst string) error {
 }
 
 func MakePublishing(resp model.Response, corId string) amqp091.Publishing {
-	bd, err := jsoniter.Marshal(resp)
+	bd, err := json.Marshal(resp)
 	if err != nil {
 		ErrorLog(err, "MakePublishing(): marshal")
 		panic(err)
@@ -147,14 +147,14 @@ func InternalError(err error, corId string) amqp091.Publishing {
 }
 
 func CompileError(msg *model.OmitString, corId string) amqp091.Publishing {
-	msgStr, err := jsoniter.MarshalToString(msg)
+	msgStr, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
 	}
 	resp := model.Response{
 		ErrCode: config.CE,
 		ErrMsg:  "compile error",
-		Data:    msgStr,
+		Data:    string(msgStr),
 	}
 	return MakePublishing(resp, corId)
 }
@@ -163,27 +163,27 @@ func RunError(err error, res model.ExecResult, corId string) amqp091.Publishing 
 	if err == nil {
 		err = errors.New("exit code is not zero")
 	}
-	resStr, merr := jsoniter.MarshalToString(res)
+	resStr, merr := json.Marshal(res)
 	if merr != nil {
 		panic(merr)
 	}
 	resp := model.Response{
 		ErrCode: config.RE,
 		ErrMsg:  err.Error(),
-		Data:    resStr,
+		Data:    string(resStr),
 	}
 	return MakePublishing(resp, corId)
 }
 
 func OKResp(resp model.ExecResult, corId string) amqp091.Publishing {
-	resStr, err := jsoniter.MarshalToString(resp)
+	resStr, err := json.Marshal(resp)
 	if err != nil {
 		panic(err)
 	}
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "success",
-		Data:    resStr,
+		Data:    string(resStr),
 	}
 	return MakePublishing(rep, corId)
 }
@@ -199,14 +199,14 @@ func RunningResp(cas int, corId string) amqp091.Publishing {
 }
 
 func WAResp(resp model.ExecResult, corId string) amqp091.Publishing {
-	resStr, err := jsoniter.MarshalToString(resp)
+	resStr, err := json.Marshal(resp)
 	if err != nil {
 		panic(err)
 	}
 	rep := model.Response{
 		ErrCode: config.OK,
 		ErrMsg:  "wrong answer",
-		Data:    resStr,
+		Data:    string(resStr),
 	}
 	return MakePublishing(rep, corId)
 }

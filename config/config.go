@@ -1,8 +1,8 @@
 package config
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -35,7 +35,7 @@ type MQConfig struct {
 }
 
 func InitConfig(filePath *string) {
-	fileBytes, err := ioutil.ReadFile(*filePath)
+	fileBytes, err := os.ReadFile(*filePath)
 	if err != nil {
 		log.Println("[FAILED] read config file failed")
 		panic(err)

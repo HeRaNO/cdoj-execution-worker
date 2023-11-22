@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ import (
 
 func prepareCodeFile(fileDesc model.SourceCodeDescriptor, filePath string) error {
 	fileRealPath := filepath.Join(filePath, fileDesc.Name)
-	return ioutil.WriteFile(fileRealPath, []byte(fileDesc.Content), 0644)
+	return os.WriteFile(fileRealPath, []byte(fileDesc.Content), 0644)
 }
 
 func deleteCodeFile(fileDesc model.SourceCodeDescriptor, filePath string) error {

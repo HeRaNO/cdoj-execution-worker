@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
@@ -13,7 +14,8 @@ func main() {
 	channel, msgQ := config.Init(initConfigFile)
 	handler.InitTestCases()
 	for req := range msgQ {
-		handler.HandleReq(req, channel)
+		ctx := context.Background()
+		handler.HandleReq(ctx, req, channel)
 	}
 
 	log.Panicln("[FATAL] Why execute this line???")

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -9,18 +10,18 @@ import (
 	"github.com/HeRaNO/cdoj-execution-worker/config"
 	"github.com/HeRaNO/cdoj-execution-worker/model"
 	"github.com/HeRaNO/cdoj-execution-worker/util"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/goccy/go-json"
 	"github.com/opencontainers/runc/libcontainer"
 	"github.com/rabbitmq/amqp091-go"
 )
 
-func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
+func HandleReq(ctx context.Context, req amqp091.Delivery, ch *amqp091.Channel) {
 	execReq := model.ExecRequest{}
-	err := jsoniter.Unmarshal(req.Body, &execReq)
+	err := json.Unmarshal(req.Body, &execReq)
 
 	if err != nil {
 		util.ErrorLog(err, "Unmarshal")
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		return
 	}
@@ -28,21 +29,21 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 	testCases, ok := IDTestCasesMap[execReq.RunPhases.ProblemID]
 	if !ok {
 		err := errors.New("cannot find test cases for problemID: " + execReq.RunPhases.ProblemID)
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		return
 	}
 
 	runTestCaseDir, compileResult, parentPath, err := HandleCompilePhases(execReq.CompilePhases)
 	if err != nil {
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 		os.RemoveAll(parentPath)
 		return
 	}
 	if !compileResult.Succeed {
-		ch.Publish("", req.ReplyTo, false, false, util.CompileError(compileResult.ErrMsg, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.CompileError(compileResult.ErrMsg, req.CorrelationId))
 		req.Ack(false)
 		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 		os.RemoveAll(parentPath)
@@ -51,7 +52,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 
 	checkPhase, runCheckDir, err := handleCheckerPrepare(execReq.CheckPhase, execReq.RunPhases.ProblemID, parentPath)
 	if err != nil {
-		ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 		req.Ack(false)
 		parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 		os.RemoveAll(parentPath)
@@ -64,10 +65,10 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 	failed := false
 
 	for i, testCase := range testCases {
-		ch.Publish("", req.ReplyTo, false, false, util.RunningResp(i+1, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.RunningResp(i+1, req.CorrelationId))
 		result, outFile, err := HandleTestCaseRun(runPhases.Run, testCase.Input, runTestCaseDir)
 		if err != nil {
-			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+			ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 			failed = true
 			break
 		}
@@ -81,14 +82,14 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 				SysTimeUsed:  result.ProcessState.SystemTime().Nanoseconds(),
 				MemoryUsed:   rusage.Maxrss,
 			}
-			ch.Publish("", req.ReplyTo, false, false, util.RunError(result.Err, runRes, req.CorrelationId))
+			ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.RunError(result.Err, runRes, req.CorrelationId))
 			failed = true
 			break
 		}
 		checkerResult, err := HandleCheckerRun(checkPhase, testCase, outFile, runCheckDir)
 		if err != nil {
 			os.Remove(outFile)
-			ch.Publish("", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
+			ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.InternalError(err, req.CorrelationId))
 			failed = true
 			break
 		}
@@ -103,7 +104,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 				MemoryUsed:    rusage.Maxrss,
 				CheckerResult: checkerResult,
 			}
-			ch.Publish("", req.ReplyTo, false, false, util.WAResp(runRes, req.CorrelationId))
+			ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.WAResp(runRes, req.CorrelationId))
 			failed = true
 			break
 		}
@@ -119,7 +120,7 @@ func HandleReq(req amqp091.Delivery, ch *amqp091.Channel) {
 			UserTimeUsed: maxUserTime,
 			MemoryUsed:   maxMemory,
 		}
-		ch.Publish("", req.ReplyTo, false, false, util.OKResp(runRes, req.CorrelationId))
+		ch.PublishWithContext(ctx, "", req.ReplyTo, false, false, util.OKResp(runRes, req.CorrelationId))
 	}
 	parentPath = filepath.Join(config.WorkDirGlobal, parentPath)
 	os.RemoveAll(parentPath)
