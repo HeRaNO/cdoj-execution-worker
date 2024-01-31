@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/goccy/go-json v0.10.2
-	github.com/opencontainers/runc v1.1.10
+	github.com/opencontainers/runc v1.1.12
 	github.com/rabbitmq/amqp091-go v1.9.0
 	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c
 	gopkg.in/yaml.v3 v3.0.1
