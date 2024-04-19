@@ -6,7 +6,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/opencontainers/runc v1.1.12
 	github.com/rabbitmq/amqp091-go v1.9.0
-	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c
+	golang.org/x/sys v0.18.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -27,6 +27,6 @@ require (
 	github.com/vishvananda/netlink v1.1.0 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
