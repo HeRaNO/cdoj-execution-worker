@@ -2,8 +2,6 @@ package model
 
 import (
 	"os"
-
-	"github.com/HeRaNO/cdoj-execution-worker/config"
 )
 
 type Limitation struct {
@@ -50,9 +48,9 @@ type ExecResult struct {
 }
 
 type Response struct {
-	ErrCode config.ErrorCode `json:"err"`
-	ErrMsg  string           `json:"msg"`
-	Data    string           `json:"data"`
+	ErrCode ErrorCode `json:"err"`
+	ErrMsg  string    `json:"msg"`
+	Data    string    `json:"data"`
 }
 
 type TestCase struct {

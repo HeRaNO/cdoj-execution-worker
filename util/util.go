@@ -140,7 +140,7 @@ func MakePublishing(resp model.Response, corId string) amqp091.Publishing {
 
 func InternalError(err error, corId string) amqp091.Publishing {
 	resp := model.Response{
-		ErrCode: config.IE,
+		ErrCode: model.IE,
 		ErrMsg:  err.Error(),
 	}
 	return MakePublishing(resp, corId)
@@ -152,7 +152,7 @@ func CompileError(msg *model.OmitString, corId string) amqp091.Publishing {
 		panic(err)
 	}
 	resp := model.Response{
-		ErrCode: config.CE,
+		ErrCode: model.CE,
 		ErrMsg:  "compile error",
 		Data:    string(msgStr),
 	}
@@ -168,7 +168,7 @@ func RunError(err error, res model.ExecResult, corId string) amqp091.Publishing 
 		panic(merr)
 	}
 	resp := model.Response{
-		ErrCode: config.RE,
+		ErrCode: model.RE,
 		ErrMsg:  err.Error(),
 		Data:    string(resStr),
 	}
@@ -181,7 +181,7 @@ func OKResp(resp model.ExecResult, corId string) amqp091.Publishing {
 		panic(err)
 	}
 	rep := model.Response{
-		ErrCode: config.OK,
+		ErrCode: model.OK,
 		ErrMsg:  "success",
 		Data:    string(resStr),
 	}
@@ -191,7 +191,7 @@ func OKResp(resp model.ExecResult, corId string) amqp091.Publishing {
 func RunningResp(cas int, corId string) amqp091.Publishing {
 	casStr := fmt.Sprintf("%d", cas)
 	rep := model.Response{
-		ErrCode: config.OK,
+		ErrCode: model.OK,
 		ErrMsg:  "running",
 		Data:    casStr,
 	}
@@ -204,7 +204,7 @@ func WAResp(resp model.ExecResult, corId string) amqp091.Publishing {
 		panic(err)
 	}
 	rep := model.Response{
-		ErrCode: config.OK,
+		ErrCode: model.OK,
 		ErrMsg:  "wrong answer",
 		Data:    string(resStr),
 	}

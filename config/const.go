@@ -10,12 +10,3 @@ const FolderNameLen = 20
 const OmitStringLen = int64(4096)
 
 var DefaultEnv = []string{"PATH=/bin:/usr/bin"}
-
-type ErrorCode int8
-
-const (
-	OK ErrorCode = iota
-	CE
-	IE
-	RE
-)

@@ -1,3 +1,5 @@
+github.com/HeRaNO/cdoj-execution-worker/model v0.0.0-20240524032704-7497e723d68e h1:SDx0RTfezAZqXwy2MMsgzK0JIK8J5XXhFaho7Ee0NNc=
+github.com/HeRaNO/cdoj-execution-worker/model v0.0.0-20240524032704-7497e723d68e/go.mod h1:Puti2JuQUoJ/3ePLXe5oTv9niqvmF81K0gXvzLa73s4=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0 h1:wpFFOoomK3389ue2lAb0Boag6XPht5QYpipxmSNL4d8=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0/go.mod h1:E/eQpaFtUKGOOSEBZgmKAcn+zUUwWxqcaKZlF54wK8E=
 github.com/cilium/ebpf v0.12.3 h1:8ht6F9MquybnY97at+VDZb3eQQr8ev79RueWeVaEcG4=
