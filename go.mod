@@ -3,7 +3,7 @@ module github.com/HeRaNO/cdoj-execution-worker
 go 1.21.9
 
 require (
-	github.com/HeRaNO/cdoj-execution-worker/model v0.0.0-20240524033058-783ad8047fe4
+	github.com/HeRaNO/cdoj-execution-worker/model v0.1.0
 	github.com/goccy/go-json v0.10.3
 	github.com/opencontainers/runc v1.1.12
 	github.com/rabbitmq/amqp091-go v1.10.0
